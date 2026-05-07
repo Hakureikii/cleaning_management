@@ -7,6 +7,10 @@ let days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "S
 let currDay = days[datetime.getDay()];
 
 btn_send_report.addEventListener('click', async function () {
+    // Close report modal
+
+    // Loading Modal
+
     // User Id of the current user
     let { data: { session } } = await supabase.auth.getSession();
 
@@ -48,11 +52,10 @@ btn_send_report.addEventListener('click', async function () {
         });
 
     if (storage_error) {
+        // close loading modal
         console.error(storage_error); //change to a modal that gives users feedback for error uploading with error message
         return;
     }
-
-    console.log("Uploaded:", storage); // Change to a modal that gives users feedback for successful upload
 
     // Upload image and details to database
     let { data: report, error: report_error } = await supabase
@@ -68,9 +71,12 @@ btn_send_report.addEventListener('click', async function () {
         .select();
 
     if (report_error) {
+        // close loading modal
         console.error(report_error); // Change to a modal that gives users feedback for error submitting report with error message
         return;
     }
 
+    // close loading modal
     console.log("Report sent"); // Change to a modal that gives users feedback for successful report submission
+    photo.value = ''; 
 });

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Report Logs </title>
+</head>
+<link rel="stylesheet" href="../src/bootstrap-5.3.8-dist/css/bootstrap.min.css">
+
+<body>
+    <a href="officer_dashboard.html"> Dashboard </a>
+    <a href="report_logs.html"> Check Reports </a>
+    <a href="#"> Notifications </a>
+
+    <button id="btn_sign_out"> Sign Out </button>
+
+    <!-- Area Assignments list -->
+    <div id="area_assignments">
+    </div>
+
+    <!-- View Details Modal -->
+    <div class="modal fade" id="detailsModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <p> Photos </p>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Close
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
+
+<script src="../src/bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js"></script>
+<script type="module" src="../services/auth/sign_out.js"></script>
+<script type="module">
+    import { requireAuth } from "../services/auth/session.js";
+    import { renderAreaAssignments } from "../services/reports/render_area_assignments.js";
+    requireAuth();
+    renderAreaAssignments();
+</script>

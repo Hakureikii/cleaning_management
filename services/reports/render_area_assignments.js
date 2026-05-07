@@ -21,7 +21,6 @@ export async function renderAreaAssignments() {
                     </p>
                 </div>
             </div>`
-        console.log(area.area); // Change to rendering the area assignments in the UI
     });
     area_placeholder.innerHTML = area_assignments;
 }

@@ -2,6 +2,7 @@ import { supabase } from "../config.js";
 
 let btn_sign_up = document.getElementById("btn_sign_up");
 btn_sign_up.addEventListener('click', async function () {
+    // Loading modal
 
     let fname = document.getElementById("fname").value;
     let mname = document.getElementById("mname").value;
@@ -17,6 +18,7 @@ btn_sign_up.addEventListener('click', async function () {
     });
 
     if (signup_err) {
+        // close loading modal
         console.error("Auth sign up error:", signup_err); // Change to an error modal with error message
         return;
     }
@@ -40,6 +42,7 @@ btn_sign_up.addEventListener('click', async function () {
             .select();
 
         if (error) {
+            // close loading modal
             console.error("Insert error:", error); // Change to an error modal with error message
             return;
         }
@@ -63,6 +66,7 @@ btn_sign_up.addEventListener('click', async function () {
             .select();
 
         if (error) {
+            // close loading modal
             console.error("Insert error:", error); // Change to an error modal with error message
             return;
         }
