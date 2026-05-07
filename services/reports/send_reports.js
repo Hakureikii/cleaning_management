@@ -6,10 +6,17 @@ let datetime = new Date();
 let days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 let currDay = days[datetime.getDay()];
 
+//MODALS
+let reportModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('reportModal'));
+let loadingModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('loadingModal'));
+let successReportModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('successReportModal'));
+
 btn_send_report.addEventListener('click', async function () {
     // Close report modal
+    reportModal.hide();
 
     // Loading Modal
+    loadingModal.show();
 
     // User Id of the current user
     let { data: { session } } = await supabase.auth.getSession();
@@ -53,6 +60,7 @@ btn_send_report.addEventListener('click', async function () {
 
     if (storage_error) {
         // close loading modal
+        loadingModal.hide();
         console.error(storage_error); //change to a modal that gives users feedback for error uploading with error message
         return;
     }
@@ -72,11 +80,15 @@ btn_send_report.addEventListener('click', async function () {
 
     if (report_error) {
         // close loading modal
+        loadingModal.hide();
         console.error(report_error); // Change to a modal that gives users feedback for error submitting report with error message
         return;
     }
 
     // close loading modal
-    console.log("Report sent"); // Change to a modal that gives users feedback for successful report submission
+    loadingModal.hide();
+    // show success modal
+    successReportModal.show();
+    
     photo.value = ''; 
 });
