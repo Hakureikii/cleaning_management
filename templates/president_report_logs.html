@@ -11,14 +11,19 @@
 <body>
     <a href="president_dashboard.html">Dashboard</a>
     <a href="president_report_logs.html"> Report Logs </a>
+    <a href="#"> Duties </a>
     <a href="#"> Notifications </a>
     <a href="#"> Profile </a>
-    <button id="btn_sign_out"> Sign Out </button>
+    <button id="btn_sign_out"> Logout </button>
 
     <!-- Floating button report -->
-    <button type="button" id="btn_report" data-bs-toggle="modal" data-bs-target="#reportModal"> Report </button>
+    <button type="button" id="btn_report" data-bs-toggle="modal" data-bs-target="#reportModal"> Send Report </button>
 
-    <!-- Modal -->
+    <!-- Area Assignments list -->
+    <div id="area_assignments">
+    </div>
+
+    <!-- Send Report Modal -->
     <div class="modal fade" id="reportModal" tabindex="-1">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
@@ -45,9 +50,41 @@
             </div>
         </div>
     </div>
+
+    <!-- View Details Modal -->
+    <div class="modal fade" id="detailsModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <p> Photos </p>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Close
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>
 
 <script src="../src/bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js"></script>
 <script type="module" src='../services/reports/send_reports.js'></script>
+<script type="module" src="../services/auth/sign_out.js"></script>
+
+<script type="module">
+    import { requireAuth } from "../services/auth/session.js";
+    import { renderAreaAssignments } from "../services/reports/render_area_assignments.js";
+    requireAuth();
+    renderAreaAssignments();
+</script>
