@@ -1,17 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
+    <link rel="stylesheet" href="../src/bootstrap-5.3.8-dist/css/bootstrap.min.css">
 </head>
+
 <body>
     <a href="president_dashboard.html">Dashboard</a>
-    <a href="#"> Report Logs </a>
+    <a href="president_report_logs.html"> Report Logs </a>
     <a href="#"> Notifications </a>
     <a href="#"> Profile </a>
     <button id="btn_sign_out"> Sign Out </button>
+
+    <!-- Floating button report -->
+    <button type="button" id="btn_report" data-bs-toggle="modal" data-bs-target="#reportModal"> Report </button>
+
+    <!-- Modal -->
+    <div class="modal fade" id="reportModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Send Reports</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <input type="file" id="photoInput">
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Close
+                    </button>
+
+                    <button type="button" class="btn btn-success" id="btn_send_report">
+                        Send Report
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
 </body>
+
 </html>
+
+<script src="../src/bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js"></script>
+<script type="module" src='../services/reports/send_reports.js'></script>
+
+<script type="module">
+
+    import { requireAuth } from "../services/auth/session.js";
+    requireAuth();
+
+</script>
 
 <script type="module" src="../services/auth/sign_out.js"></script>

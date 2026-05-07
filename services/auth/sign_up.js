@@ -17,7 +17,7 @@ btn_sign_up.addEventListener('click', async function () {
     });
 
     if (signup_err) {
-        console.error("Auth sign up error:", signup_err);
+        console.error("Auth sign up error:", signup_err); // Change to an error modal with error message
         return;
     }
 
@@ -40,12 +40,35 @@ btn_sign_up.addEventListener('click', async function () {
             .select();
 
         if (error) {
-            console.error("Insert error:", error);
+            console.error("Insert error:", error); // Change to an error modal with error message
             return;
         }
 
-        alert("President signed up successfully!");
+        alert("President signed up successfully!"); // Change to a success modal
+    }
 
+    else if (role === "officer") {
+        const { data, error } = await supabase
+            .from('council_officers')
+            .insert([
+                {
+                    first_name: fname,
+                    middle_name: mname,
+                    last_name: lname,
+                    section_id: section,
+                    council_officer_uuid: user_id,
+                    email: email
+                }
+            ])
+            .select();
+
+        if (error) {
+            console.error("Insert error:", error); // Change to an error modal with error message
+            return;
+        }
+
+        alert("Council officer signed up successfully!"); // Change to a success modal
+        window.location.href = 'sign_in.html';
     }
 
 });
