@@ -47,6 +47,11 @@ btn_send_report.addEventListener('click', async function () {
 
     let cleaningDutyId = cleaning_duty.cleaning_duty_id;
 
+    if (!cleaningDutyId) {
+        console.log('Weekends'); // Fix loading issue
+        return;
+    }
+
     // Upload image to supabase storage
     let photo = document.getElementById("photoInput").files[0];
     let photoPath = `${Date.now()}_${photo.name}`;
