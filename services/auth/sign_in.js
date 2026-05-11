@@ -38,5 +38,6 @@ btn_sign_in.addEventListener('click', async function () {
     }
 
     // close loading modal
+    localStorage.setItem('role', role);
     alert("Signed In"); // Change modal to a success modal
 });

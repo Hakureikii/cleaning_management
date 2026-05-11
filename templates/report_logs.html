@@ -30,7 +30,11 @@
                 </div>
 
                 <div class="modal-body">
+                    <input type="date" id="filter_by_date">
+                    <select name="" id="section_dropdown"></select>
+                    <button type="button" class="btn btn-primary" id="filter_date_btn">Select</button>
                     <p> Photos </p>
+                    <div id="report_photo_container"></div>
                 </div>
 
                 <div class="modal-footer">
@@ -74,6 +78,7 @@
 
 <script src="../src/bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js"></script>
 <script type="module" src="../services/auth/sign_out.js"></script>
+<script type="module" src="../services/section_dropdown.js"></script>
 <script type="module">
     import { requireAuth } from "../services/auth/session.js";
     import { renderAreaAssignments } from "../services/reports/render_area_assignments.js";

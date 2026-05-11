@@ -8,6 +8,7 @@ let input_date = document.getElementById('filter_by_date');
 let photo_container = document.getElementById('report_photo_container');
 let container = '';
 let area_id = null;
+let role = localStorage.getItem('role');
 
 export async function renderAreaAssignments() {
     let area_assignments = ''
@@ -60,35 +61,60 @@ export async function renderAreaAssignments() {
                 .eq('president_user_id', userId);
 
             // get reports based on the rooms and the current date (default view)
-            let { data: reports, error: r_err } = await supabase
-                .from('reports')
-                .select('cleaning_duty!inner(cleaning_duty_id, area_assignment_id, section_id), datetime_sent, photo_proof')
-                .eq('cleaning_duty.area_assignment_id', area_id)
-                .eq('cleaning_duty.section_id', section[0].section_id)
-                .gte('datetime_sent', day_start)
-                .lte('datetime_sent', day_end);
 
-            console.log(reports);
-            // console.log(r_err);
-            if (reports.length === 0) {
-                console.log('No reports found for this area assignment today.');
-                photo_container.innerHTML = 'No reports found for this area assignment today'; // Update the style
-                return;
-            }
-
-            reports.forEach(report => {
-                // get the url of the photo
-                let { data: photo_url } = supabase.storage
+            if (role === 'president') {
+                let { data: reports, error: r_err } = await supabase
                     .from('reports')
-                    .getPublicUrl(report.photo_proof);
-                //display to the modal
-                container += `
+                    .select('cleaning_duty!inner(cleaning_duty_id, area_assignment_id, section_id), datetime_sent, photo_proof')
+                    .eq('cleaning_duty.area_assignment_id', area_id)
+                    .eq('cleaning_duty.section_id', section[0].section_id)
+                    .gte('datetime_sent', day_start)
+                    .lte('datetime_sent', day_end);
+
+                console.log(reports);
+
+                if (reports.length === 0) {
+                    console.log('No reports found for this area assignment today.');
+                    photo_container.innerHTML = 'No reports found for this area assignment today'; // Update the style
+                    return;
+                }
+                // get the url of the photo
+                reports.forEach(report => {
+
+                    let { data: photo_url } = supabase.storage
+                        .from('reports')
+                        .getPublicUrl(report.photo_proof);
+                    //display to the modal
+                    container += `
                 <p><strong>Report Sent At:</strong> ${report.datetime_sent}</p>
                 <img src="${photo_url.publicUrl}" class="img-fluid mb-2 rounded">
                 `
-            });
-            photo_container.innerHTML = container;
-            // let photo_name = reports[0].photo_proof;
+                });
+                photo_container.innerHTML = container;
+
+            } else if (role === 'officer') {
+                let { data: reports, error: r_err } = await supabase
+                    .from('reports')
+                    .select('cleaning_duty!inner(cleaning_duty_id, area_assignment_id), datetime_sent, photo_proof')
+                    .eq('cleaning_duty.area_assignment_id', area_id)
+                    .gte('datetime_sent', day_start)
+                    .lte('datetime_sent', day_end);
+                console.log(reports);
+                // get the url of the photo
+                reports.forEach(report => {
+
+                    let { data: photo_url } = supabase.storage
+                        .from('reports')
+                        .getPublicUrl(report.photo_proof);
+                    //display to the modal
+                    container += `
+                <p><strong>Report Sent At:</strong> ${report.datetime_sent}</p>
+                <img src="${photo_url.publicUrl}" class="img-fluid mb-2 rounded">
+                `
+                });
+
+                photo_container.innerHTML = container;
+            }
         });
 
     });
@@ -111,7 +137,7 @@ export async function renderAreaAssignments() {
             photo_container.innerHTML = 'No reports found for the selected date.';
             return;
         }
-        
+
         filter_date_record.forEach(record => {
             let { data: photo_url } = supabase.storage
                 .from('reports')
