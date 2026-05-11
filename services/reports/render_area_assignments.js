@@ -96,6 +96,7 @@ export async function renderAreaAssignments() {
     // filter records by date
     let filter_btn = document.getElementById('filter_date_btn');
     filter_btn.addEventListener('click', async function () {
+        container = '';
         let filter_day_start = `${input_date.value}T00:00:00.000Z`;
         let filter_day_end = `${input_date.value}T23:59:59.999Z`;
 
