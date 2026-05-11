@@ -4,8 +4,10 @@ let loadingModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('
 let today = new Date();
 let day_start = new Date(today.setHours(0, 0, 0, 0)).toISOString();
 let day_end = new Date(today.setHours(23, 59, 59, 999)).toISOString();
-
-console.log(day_start, day_end);
+let input_date = document.getElementById('filter_by_date');
+let photo_container = document.getElementById('report_photo_container');
+let container = '';
+let area_id = null;
 
 export async function renderAreaAssignments() {
     let area_assignments = ''
@@ -40,7 +42,8 @@ export async function renderAreaAssignments() {
     let views = document.querySelectorAll('.view_report_btn');
     views.forEach(view => {
         view.addEventListener('click', async function () {
-            let area_id = this.dataset.areaid;
+            area_id = this.dataset.areaid;
+            container = '';
 
             // for presidents get section id
             let { data: { session } } = await supabase.auth.getSession();
@@ -51,51 +54,74 @@ export async function renderAreaAssignments() {
             }
 
             let userId = session.user.id;
-
             let { data: section, error: s_err } = await supabase
                 .from('presidents')
                 .select('section_id')
                 .eq('president_user_id', userId);
-
-            // console.log(section);
 
             // get reports based on the rooms and the current date (default view)
             let { data: reports, error: r_err } = await supabase
                 .from('reports')
                 .select('cleaning_duty!inner(cleaning_duty_id, area_assignment_id, section_id), datetime_sent, photo_proof')
                 .eq('cleaning_duty.area_assignment_id', area_id)
-                .eq('cleaning_duty.section_id', section[0].section_id);
-                // .gte('datetime_sent', day_start)
-                // .lte('datetime_sent', day_end);
-            
-            // console.log(r_err);
+                .eq('cleaning_duty.section_id', section[0].section_id)
+                .gte('datetime_sent', day_start)
+                .lte('datetime_sent', day_end);
+
             console.log(reports);
-            // if (!reports) {
-            //     console.log('Null');
-            // }
-            
+            // console.log(r_err);
+            if (reports.length === 0) {
+                console.log('No reports found for this area assignment today.');
+                photo_container.innerHTML = 'No reports found for this area assignment today'; // Update the style
+                return;
+            }
 
-            // retrieve images from storage
-            // let { data, error } = await supabase.storage.from('reports').list('', {
-            //     limit: 100,
-            //     offset: 0
-            // });
-
-            // if (error) {
-            //     console.error("Error listing files:", error);
-            //     return;
-            // }
-
-            // let photo_name = data[1].name;
-
-            // // get the url of the photo
-            // let { data: photo } = supabase.storage
-            //     .from('reports')
-            //     .getPublicUrl(photo_name);
-
-            // console.log(photo.publicUrl);
-
+            reports.forEach(report => {
+                // get the url of the photo
+                let { data: photo_url } = supabase.storage
+                    .from('reports')
+                    .getPublicUrl(report.photo_proof);
+                //display to the modal
+                container += `
+                <p><strong>Report Sent At:</strong> ${report.datetime_sent}</p>
+                <img src="${photo_url.publicUrl}" class="img-fluid mb-2 rounded">
+                `
+            });
+            photo_container.innerHTML = container;
+            // let photo_name = reports[0].photo_proof;
         });
+
+    });
+
+    // filter records by date
+    let filter_btn = document.getElementById('filter_date_btn');
+    filter_btn.addEventListener('click', async function () {
+        let filter_day_start = `${input_date.value}T00:00:00.000Z`;
+        let filter_day_end = `${input_date.value}T23:59:59.999Z`;
+
+        let { data: filter_date_record, error: f_err } = await supabase
+            .from('reports')
+            .select("*, cleaning_duty!inner(area_assignment_id)")
+            .eq('cleaning_duty.area_assignment_id', area_id)
+            .gte('datetime_sent', filter_day_start)
+            .lte('datetime_sent', filter_day_end);
+
+        if (filter_date_record.length === 0) {
+            photo_container.innerHTML = 'No reports found for the selected date.';
+            return;
+        }
+        
+        filter_date_record.forEach(record => {
+            let { data: photo_url } = supabase.storage
+                .from('reports')
+                .getPublicUrl(record.photo_proof);
+            container += `
+                <p><strong>Report Sent At:</strong> ${record.datetime_sent}</p>
+                <img src="${photo_url.publicUrl}" class="img-fluid mb-2 rounded">
+                `
+        });
+        photo_container.innerHTML = container;
+        console.log(filter_date_record);
     });
 }
 
