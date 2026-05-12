@@ -44,7 +44,7 @@ export async function renderAreaAssignments() {
     views.forEach(view => {
         view.addEventListener('click', async function () {
             area_id = this.dataset.areaid;
-            container = '';
+            photo_container.innerHTML = '';
 
             // for presidents get section id
             let { data: { session } } = await supabase.auth.getSession();
@@ -62,6 +62,8 @@ export async function renderAreaAssignments() {
 
             // get reports based on the rooms and the current date (default view)
 
+
+            // REFACTOR BLOCK {
             if (role === 'president') {
                 let { data: reports, error: r_err } = await supabase
                     .from('reports')
@@ -116,6 +118,7 @@ export async function renderAreaAssignments() {
                 photo_container.innerHTML = container;
             }
         });
+        //  END BLOCK }
 
     });
 
