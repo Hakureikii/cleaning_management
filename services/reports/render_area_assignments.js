@@ -45,6 +45,7 @@ export async function renderAreaAssignments() {
         view.addEventListener('click', async function () {
             area_id = this.dataset.areaid;
             photo_container.innerHTML = '';
+            console.log(role);
 
             // for presidents get section id
             let { data: { session } } = await supabase.auth.getSession();
@@ -60,83 +61,19 @@ export async function renderAreaAssignments() {
                 .select('section_id')
                 .eq('president_user_id', userId);
 
-            // get reports based on the rooms and the current date (default view)
-
-
-            // REFACTOR BLOCK {
-            // if (role === 'president') {
-            //     let { data: reports, error: r_err } = await supabase
-            //         .from('reports')
-            //         .select('cleaning_duty!inner(cleaning_duty_id, area_assignment_id, section_id), datetime_sent, photo_proof')
-            //         .eq('cleaning_duty.area_assignment_id', area_id)
-            //         .eq('cleaning_duty.section_id', section[0].section_id)
-            //         .gte('datetime_sent', day_start)
-            //         .lte('datetime_sent', day_end);
-
-            //     console.log(reports);
-
-            //     if (reports.length === 0) {
-            //         console.log('No reports found for this area assignment today.');
-            //         photo_container.innerHTML = 'No reports found for this area assignment today'; // Update the style
-            //         return;
-            //     }
-            //     // get the url of the photo
-            //     reports.forEach(report => {
-
-            //         let { data: photo_url } = supabase.storage
-            //             .from('reports')
-            //             .getPublicUrl(report.photo_proof);
-            //         //display to the modal
-            //         container += `
-            //     <p><strong>Report Sent At:</strong> ${report.datetime_sent}</p>
-            //     <img src="${photo_url.publicUrl}" class="img-fluid mb-2 rounded">
-            //     `
-            //     });
-            //     photo_container.innerHTML = container;
-
-            // } else if (role === 'officer') {
-            //     let { data: reports, error: r_err } = await supabase
-            //         .from('reports')
-            //         .select('cleaning_duty!inner(cleaning_duty_id, area_assignment_id), datetime_sent, photo_proof')
-            //         .eq('cleaning_duty.area_assignment_id', area_id)
-            //         .gte('datetime_sent', day_start)
-            //         .lte('datetime_sent', day_end);
-            //     console.log(reports);
-            //     // get the url of the photo
-            //     reports.forEach(report => {
-
-            //         let { data: photo_url } = supabase.storage
-            //             .from('reports')
-            //             .getPublicUrl(report.photo_proof);
-            //         //display to the modal
-            //         container += `
-            //     <p><strong>Report Sent At:</strong> ${report.datetime_sent}</p>
-            //     <img src="${photo_url.publicUrl}" class="img-fluid mb-2 rounded">
-            //     `
-            //     });
-
-            //     photo_container.innerHTML = container;
-            // }
-
-            //   REFACTORED STATEMENTS {
-            let { data: reports, error: r_err } = await supabase
+            let query = supabase
                 .from('reports')
                 .select('cleaning_duty!inner(cleaning_duty_id, area_assignment_id, section_id), datetime_sent, photo_proof')
                 .eq('cleaning_duty.area_assignment_id', area_id)
-                .eq(role === 'president' ? 'cleaning_duty.section_id' : null , role === 'president' ? section[0].section_id : null)
-                // .eq('cleaning_duty.section_id', section[0].section_id)
                 .gte('datetime_sent', day_start)
-                .lte('datetime_sent', day_end);
+                .lte('datetime_sent', day_end)
 
-            console.log(reports);
+            if (role === 'president') {
+                query = query.eq('cleaning_duty.section_id', section[0].section_id);
+            }
 
-            // }
+            let { data: reports, error: r_err } = await query;
         });
-
-
-
-        //  END BLOCK }
-
 
     });
 
@@ -172,4 +109,3 @@ export async function renderAreaAssignments() {
         console.log(filter_date_record);
     });
 }
-
