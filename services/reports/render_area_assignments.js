@@ -11,31 +11,72 @@ let area_id = null;
 let role = localStorage.getItem('role');
 
 export async function renderAreaAssignments() {
-    let area_assignments = ''
     let area_placeholder = document.getElementById("area_assignments");
+    let area_assignments = '';
 
-    let { data, error } = await supabase
+    // GET ALL AREAS
+    let { data: areas, error } = await supabase
         .from('area_assignments')
-        .select('*')
+        .select('*');
 
-    data.forEach(area => {
-        area_assignments +=
-            `<div class="card shadow-sm mb-3 mx-3">
+    // GET ALL REPORTS TODAY
+    let { data: reports, error: reportError } = await supabase
+        .from('reports')
+        .select(`
+            cleaning_duty!inner(
+                area_assignment_id
+            ),
+            datetime_sent
+        `)
+        .gte('datetime_sent', day_start)
+        .lte('datetime_sent', day_end);
+
+    // STORE REPORTED AREA IDS
+    let reportedAreas = reports.map(report =>
+        report.cleaning_duty.area_assignment_id
+    );
+
+    areas.forEach(area => {
+
+        let noReportsBadge = '';
+
+        if (role === 'officer') {
+            // CHECK IF AREA HAS REPORT
+            if (!reportedAreas.includes(area.area_assignment_id)) {
+
+                noReportsBadge = `
+                <span class="badge bg-danger ms-2">
+                    No Reports
+                </span>
+            `;
+            }
+        }
+
+        area_assignments += `
+            <div class="card shadow-sm mb-3 mx-3">
                 <div class="card-body">
-                    <h5 class="card-title">Area Assignment</h5>
+
+                    <h5 class="card-title">
+                        Area Assignment
+                        ${noReportsBadge}
+                    </h5>
+
                     <p class="card-text">
                         <strong>Area:</strong> ${area.area}
-                        <button
-                        type='button'
-                        class="btn btn-primary view_report_btn"
-                        data-bs-toggle="modal"
-                        data-bs-target="#detailsModal"
-                        data-areaid="${area.area_assignment_id}">
-                            View Reports
-                        </button>
                     </p>
+
+                    <button
+                    type='button'
+                    class="btn btn-primary view_report_btn"
+                    data-bs-toggle="modal"
+                    data-bs-target="#detailsModal"
+                    data-areaid="${area.area_assignment_id}">
+                        View Reports
+                    </button>
+
                 </div>
-            </div>`
+            </div>
+        `;
     });
 
     area_placeholder.innerHTML = area_assignments;
@@ -45,7 +86,6 @@ export async function renderAreaAssignments() {
         view.addEventListener('click', async function () {
             area_id = this.dataset.areaid;
             photo_container.innerHTML = '';
-            console.log(role);
 
             // for presidents get section id
             let { data: { session } } = await supabase.auth.getSession();
