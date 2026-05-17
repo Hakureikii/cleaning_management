@@ -4,53 +4,234 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
+    <title>President Dashboard</title>
+
     <link rel="stylesheet" href="../src/bootstrap-5.3.8-dist/css/bootstrap.min.css">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+<style>
+:root{--bg-color:#020617;--card-bg:#0f172a;--border-color:#1e293b;--text-color:#ffffff;--muted-text:#94a3b8;--input-bg:#1e293b;--input-border:#334155;--primary:#0ea5e9;--primary-hover:#0284c7;}
+
+body.light-theme{--bg-color:#f1f5f9;--card-bg:#ffffff;--border-color:#dbeafe;--text-color:#0f172a;--muted-text:#64748b;--input-bg:#f8fafc;--input-border:#cbd5e1;--primary:#0284c7;--primary-hover:#0369a1;}
+
+body{margin:0;min-height:100vh;background:var(--bg-color);color:var(--text-color);font-family:Arial,sans-serif;transition:0.3s ease;}
+
+.sidebar{width:260px;height:100vh;position:fixed;top:0;left:0;background:var(--card-bg);border-right:1px solid var(--border-color);padding:25px 18px;}
+
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:35px;}
+
+.brand i{font-size:2rem;color:var(--primary);}
+
+.brand h4{margin:0;font-weight:bold;}
+
+.sidebar a{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--muted-text);padding:12px 15px;border-radius:12px;margin-bottom:10px;transition:0.2s;}
+
+.sidebar a:hover,.sidebar a.active{background:rgba(14,165,233,0.15);color:#fff;}
+
+body.light-theme .sidebar a:hover,body.light-theme .sidebar a.active{color:#000;}
+
+.main-content{margin-left:260px;padding:30px;}
+
+.dashboard-card{background:var(--card-bg);border:1px solid var(--border-color);border-radius:18px;padding:25px;box-shadow:0 0 20px rgba(0,0,0,0.25);}
+
+.dashboard-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px;}
+
+.dashboard-header h2{font-weight:bold;margin:0;}
+
+.dashboard-header p{margin:0;color:var(--muted-text);}
+
+.btn-primary-custom{background:var(--primary);border:none;color:#fff;padding:10px 18px;border-radius:10px;font-weight:600;}
+
+.btn-primary-custom:hover{background:var(--primary-hover);}
+
+.btn-outline-custom{border:1px solid var(--border-color);background:transparent;color:var(--text-color);padding:10px 18px;border-radius:10px;}
+
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;}
+
+.stats-card{background:var(--input-bg);border:1px solid var(--input-border);border-radius:16px;padding:20px;}
+
+.stats-card h5{color:var(--muted-text);font-size:0.9rem;}
+
+.stats-card h2{margin-top:10px;font-weight:bold;}
+
+.floating-btn{position:fixed;bottom:25px;right:25px;width:65px;height:65px;border-radius:50%;border:none;background:var(--primary);color:#fff;font-size:1.5rem;box-shadow:0 5px 20px rgba(0,0,0,0.35);z-index:999;}
+
+.floating-btn:hover{background:var(--primary-hover);}
+
+.modal-content{background:var(--card-bg);border:1px solid var(--border-color);color:var(--text-color);border-radius:18px;}
+
+.form-control{background:var(--input-bg);border:1px solid var(--input-border);color:var(--text-color);}
+
+.form-control:focus{background:var(--input-bg);color:var(--text-color);border-color:var(--primary);box-shadow:none;}
+
+@media(max-width:768px){
+.sidebar{width:100%;height:auto;position:relative;display:flex;flex-wrap:wrap;justify-content:center;}
+.main-content{margin-left:0;}
+.brand{width:100%;justify-content:center;}
+}
+</style>
 </head>
 
 <body>
-    <a href="president_dashboard.html">Dashboard</a>
-    <a href="president_report_logs.html"> Report Logs </a>
-    <a href="#"> Duties </a>
-    <a href="#"> Notifications </a>
-    <a href="#"> Profile </a>
-    <button id="btn_sign_out"> Logout </button>
 
-    <!-- Floating button report -->
-    <button type="button" id="btn_report" data-bs-toggle="modal" data-bs-target="#reportModal"> Send Report </button>
+    <!-- SIDEBAR -->
+    <div class="sidebar">
 
-    <h3> - President Dashboard - </h3>
+        <div class="brand">
+            <i class="bi bi-shield-check"></i>
+            <h4>President</h4>
+        </div>
 
-    <!-- Send Report Modal -->
-    <div class="modal fade" id="reportModal" tabindex="-1">
-        <div class="modal-dialog modal-xl">
-            <div class="modal-content">
+        <a href="president_dashboard.html" class="active">
+            <i class="bi bi-grid-fill"></i>
+            Dashboard
+        </a>
 
-                <div class="modal-header">
-                    <h5 class="modal-title">Send Reports</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <a href="president_report_logs.html">
+            <i class="bi bi-clock-history"></i>
+            Report Logs
+        </a>
+
+        <a href="#">
+            <i class="bi bi-list-task"></i>
+            Duties
+        </a>
+
+        <a href="#">
+            <i class="bi bi-bell-fill"></i>
+            Notifications
+        </a>
+
+        <a href="#">
+            <i class="bi bi-person-circle"></i>
+            Profile
+        </a>
+
+        <a href="#" id="btn_sign_out">
+            <i class="bi bi-box-arrow-right"></i>
+            Logout
+        </a>
+
+    </div>
+
+    <!-- MAIN -->
+    <div class="main-content">
+
+        <div class="dashboard-card">
+
+            <div class="dashboard-header">
+
+                <div>
+                    <h2>President Dashboard</h2>
+                    <p>Manage reports, duties, and notifications</p>
                 </div>
 
-                <div class="modal-body">
-                    <input type="file" id="photoInput">
+                <!-- THEME SWITCH -->
+                <button class="btn-outline-custom" id="themeToggle">
+                    <i class="bi bi-moon-stars-fill"></i>
+                    Theme
+                </button>
+
+            </div>
+
+            <!-- STATS -->
+            <div class="stats-grid">
+
+                <div class="stats-card">
+                    <h5>Total Reports</h5>
+                    <h2>24</h2>
                 </div>
 
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        Close
-                    </button>
+                <div class="stats-card">
+                    <h5>Pending Duties</h5>
+                    <h2>7</h2>
+                </div>
 
-                    <button type="button" class="btn btn-success" id="btn_send_report">
-                        Send Report
-                    </button>
+                <div class="stats-card">
+                    <h5>Notifications</h5>
+                    <h2>13</h2>
                 </div>
 
             </div>
+
         </div>
+
     </div>
 
-    <!-- Loading Modal -->
-    <div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <!-- FLOATING REPORT BUTTON -->
+    <button type="button"
+        class="floating-btn"
+        data-bs-toggle="modal"
+        data-bs-target="#reportModal">
+
+        <i class="bi bi-plus-lg"></i>
+
+    </button>
+
+    <!-- REPORT MODAL -->
+    <div class="modal fade" id="reportModal" tabindex="-1">
+
+        <div class="modal-dialog modal-xl">
+
+            <div class="modal-content">
+
+                <div class="modal-header border-0">
+
+                    <h5 class="modal-title">
+                        Send Report
+                    </h5>
+
+                    <button type="button"
+                        class="btn-close btn-close-white"
+                        data-bs-dismiss="modal"></button>
+
+                </div>
+
+                <div class="modal-body">
+
+                    <label class="mb-2">Upload Report Photo</label>
+
+                    <input type="file"
+                        id="photoInput"
+                        class="form-control">
+
+                </div>
+
+                <div class="modal-footer border-0">
+
+                    <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+
+                        Close
+
+                    </button>
+
+                    <button type="button"
+                        class="btn btn-success"
+                        id="btn_send_report">
+
+                        Send Report
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- LOADING MODAL -->
+    <div class="modal fade"
+        id="loadingModal"
+        tabindex="-1"
+        data-bs-backdrop="static"
+        data-bs-keyboard="false">
 
         <div class="modal-dialog modal-dialog-centered">
 
@@ -58,13 +239,11 @@
 
                 <div class="modal-body text-center p-5">
 
-                    <!-- Spinner -->
-                    <div class="spinner-border text-primary mb-3" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
+                    <div class="spinner-border text-info mb-3"></div>
 
                     <h5 class="fw-bold">Processing...</h5>
-                    <p class="text-muted mb-0">
+
+                    <p class="text-muted">
                         Please wait this won't take long...
                     </p>
 
@@ -73,41 +252,91 @@
             </div>
 
         </div>
+
     </div>
 
-    <!-- Success Report Modal -->
-    <div class="modal fade" id="successReportModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <!-- SUCCESS MODAL -->
+    <div class="modal fade"
+        id="successReportModal"
+        tabindex="-1">
+
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content text-center border-0 shadow rounded-4 p-4">
+
+            <div class="modal-content text-center p-4">
 
                 <div class="modal-body">
 
-                    <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                    <i class="bi bi-check-circle-fill text-success"
+                        style="font-size:4rem;"></i>
 
-                    <h4 class="fw-bold mt-3">Success!</h4>
-                    <p class="text-muted">Your report has been submitted.</p>
+                    <h4 class="fw-bold mt-3">
+                        Success!
+                    </h4>
 
-                    <button class="btn btn-success mt-2" data-bs-dismiss="modal">
+                    <p class="text-muted">
+                        Your report has been submitted.
+                    </p>
+
+                    <button class="btn btn-success mt-2"
+                        data-bs-dismiss="modal">
+
                         OK
+
                     </button>
 
                 </div>
 
             </div>
+
         </div>
+
     </div>
+
+    <script src="../src/bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js"></script>
+
+    <script type="module" src="../services/reports/send_reports.js"></script>
+
+    <script type="module">
+
+        import { requireAuth } from "../services/auth/session.js";
+        requireAuth();
+
+    </script>
+
+    <script type="module" src="../services/auth/sign_out.js"></script>
+
+    <!-- THEME SWITCHER -->
+    <script>
+
+        const themeToggle = document.getElementById("themeToggle");
+
+        // Load saved theme
+        if(localStorage.getItem("theme") === "light"){
+
+            document.body.classList.add("light-theme");
+
+        }
+
+        themeToggle.addEventListener("click", () => {
+
+            document.body.classList.toggle("light-theme");
+
+            // Save theme
+            if(document.body.classList.contains("light-theme")){
+
+                localStorage.setItem("theme", "light");
+
+            }
+            else{
+
+                localStorage.setItem("theme", "dark");
+
+            }
+
+        });
+
+    </script>
+
 </body>
 
 </html>
-
-<script src="../src/bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js"></script>
-<script type="module" src='../services/reports/send_reports.js'></script>
-
-<script type="module">
-
-    import { requireAuth } from "../services/auth/session.js";
-    requireAuth();
-
-</script>
-
-<script type="module" src="../services/auth/sign_out.js"></script>
