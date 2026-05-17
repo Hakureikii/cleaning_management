@@ -5,21 +5,51 @@ let loadingModal = bootstrap.Modal.getOrCreateInstance(
 );
 
 let today = new Date();
-let day_start = new Date(today.setHours(0, 0, 0, 0)).toISOString();
-let day_end = new Date(today.setHours(23, 59, 59, 999)).toISOString();
+
+let day_start = new Date(
+    today.setHours(0, 0, 0, 0)
+).toISOString();
+
+let day_end = new Date(
+    today.setHours(23, 59, 59, 999)
+).toISOString();
+
 let selected_day = day_start;
 let selected_day_end = day_end;
+
 let input_date = document.getElementById('filter_by_date');
-let photo_container = document.getElementById('report_photo_container');
+
+let photo_container = document.getElementById(
+    'report_photo_container'
+);
+
+let container = '';
 
 let area_id = null;
+
 let role = localStorage.getItem('role');
-let accept_btn = document.getElementById('btn_accept_report');
-let decline_btn = document.getElementById('btn_decline_report');
+
+let accept_btn;
+let decline_btn;
+
 let selected_cleaning_duty_id = null;
 
+/* =========================
+   RENDER AREA ASSIGNMENTS
+========================= */
 export async function renderAreaAssignments() {
-    let area_placeholder = document.getElementById("area_assignments");
+
+    accept_btn = document.getElementById(
+        'btn_accept_report'
+    );
+
+    decline_btn = document.getElementById(
+        'btn_decline_report'
+    );
+
+    let area_placeholder =
+        document.getElementById("area_assignments");
+
     let area_assignments = '';
 
     // GET ALL AREAS
@@ -27,20 +57,31 @@ export async function renderAreaAssignments() {
         .from('area_assignments')
         .select('*');
 
-    // GET ALL REPORTS TODAY
-    let { data: reports, error: reportError } = await supabase
-        .from('reports')
-        .select(`
-            cleaning_duty!inner(
-                area_assignment_id
-            ),
-            datetime_sent
-        `)
-        .gte('datetime_sent', day_start)
-        .lte('datetime_sent', day_end);
+    if (error) {
+        console.error(error);
+        return;
+    }
+
+    // GET REPORTS TODAY
+    let { data: reports, error: reportError } =
+        await supabase
+            .from('reports')
+            .select(`
+                cleaning_duty!inner(
+                    area_assignment_id
+                ),
+                datetime_sent
+            `)
+            .gte('datetime_sent', day_start)
+            .lte('datetime_sent', day_end);
+
+    if (reportError) {
+        console.error(reportError);
+        return;
+    }
 
     // STORE REPORTED AREA IDS
-    let reportedAreas = reports.map(report =>
+    let reportedAreas = (reports || []).map(report =>
         report.cleaning_duty.area_assignment_id
     );
 
@@ -48,15 +89,20 @@ export async function renderAreaAssignments() {
 
         let noReportsBadge = '';
 
+        // OFFICER CHECK
         if (role === 'officer') {
-            // CHECK IF AREA HAS REPORT
-            if (!reportedAreas.includes(area.area_assignment_id)) {
+
+            if (
+                !reportedAreas.includes(
+                    area.area_assignment_id
+                )
+            ) {
 
                 noReportsBadge = `
-                <span class="badge bg-danger ms-2">
-                    No Reports
-                </span>
-            `;
+                    <span class="badge bg-danger ms-2">
+                        No Reports
+                    </span>
+                `;
             }
         }
 
@@ -70,15 +116,16 @@ export async function renderAreaAssignments() {
                     </h5>
 
                     <p class="card-text">
-                        <strong>Area:</strong> ${area.area}
+                        <strong>Area:</strong>
+                        ${area.area}
                     </p>
 
                     <button
-                    type='button'
-                    class="btn btn-primary view_report_btn"
-                    data-bs-toggle="modal"
-                    data-bs-target="#detailsModal"
-                    data-areaid="${area.area_assignment_id}">
+                        type="button"
+                        class="btn btn-primary view_report_btn"
+                        data-bs-toggle="modal"
+                        data-bs-target="#detailsModal"
+                        data-areaid="${area.area_assignment_id}">
                         View Reports
                     </button>
 
@@ -89,16 +136,39 @@ export async function renderAreaAssignments() {
 
     area_placeholder.innerHTML = area_assignments;
 
-    let views = document.querySelectorAll('.view_report_btn');
+    bindViewButtons();
+}
+
+/* =========================
+   VIEW REPORTS
+========================= */
+function bindViewButtons() {
+
+    let views =
+        document.querySelectorAll('.view_report_btn');
+
     views.forEach(view => {
+
         view.addEventListener('click', async function () {
-            accept_btn.disabled = false;
-            decline_btn.disabled = false;
+
+            // accept_btn.disabled = false;
+            // decline_btn.disabled = false;
+
             area_id = this.dataset.areaid;
+
             photo_container.innerHTML = '';
 
-            // for presidents get section id
-            let { data: { session } } = await supabase.auth.getSession();
+            // IMPORTANT RESET
+            container = '';
+
+            // RESET DATE FILTER
+            selected_day = day_start;
+            selected_day_end = day_end;
+
+            // GET SESSION
+            let {
+                data: { session }
+            } = await supabase.auth.getSession();
 
             if (!session) {
                 console.error("No user signed in!");
@@ -106,130 +176,287 @@ export async function renderAreaAssignments() {
             }
 
             let userId = session.user.id;
-            let { data: section, error: s_err } = await supabase
+
+            // GET PRESIDENT SECTION
+            let {
+                data: section,
+                error: s_err
+            } = await supabase
                 .from('presidents')
                 .select('section_id')
                 .eq('president_user_id', userId);
 
-                let query = supabase
-                    .from('reports')
-                    .select(`
-                        datetime_sent,
-                        photo_proof,
-                        cleaning_duty!inner (
-                            area_assignment_id,
-                            section_id
-                        )
-                    `)
-                    .eq('cleaning_duty.area_assignment_id', area_id)
-                    .gte('datetime_sent', day_start)
-                    .lte('datetime_sent', day_end);
+            if (s_err) {
+                console.error(s_err);
+                return;
+            }
 
-                if (role === 'president') {
-                    query = query.eq(
-                        'cleaning_duty.section_id',
-                        sectionData.section_id
-                    );
+            // REPORT QUERY
+            let query = supabase
+                .from('reports')
+                .select(`
+                    status,
+                    datetime_sent,
+                    photo_proof,
+                    cleaning_duty!inner(
+                        cleaning_duty_id,
+                        area_assignment_id,
+                        section_id
+                    )
+                `)
+                .eq(
+                    'cleaning_duty.area_assignment_id',
+                    area_id
+                )
+                .gte('datetime_sent', day_start)
+                .lte('datetime_sent', day_end);
+
+            // PRESIDENT FILTER
+            if (role === 'president') {
+
+                if (!section || section.length === 0) {
+                    console.error('No section found');
+                    return;
                 }
 
-            let { data: reports, error: r_err } = await query;
+                query = query.eq(
+                    'cleaning_duty.section_id',
+                    section[0].section_id
+                );
+            }
 
-            if (reports.length === 0) {
-                photo_container.innerHTML = 'No reports today';
+            let {
+                data: reports,
+                error: r_err
+            } = await query;
+
+            if (r_err) {
+                console.error(r_err);
+                return;
+            }
+
+            // NO REPORTS
+            if (!reports || reports.length === 0) {
+
+                photo_container.innerHTML =
+                    'No reports today';
+
+                accept_btn.disabled = true;
+                decline_btn.disabled = true;
+
                 return;
             }
 
             reports.forEach(report => {
 
-                selected_cleaning_duty_id = report.cleaning_duty.cleaning_duty_id;
+                // STORE CLEANING DUTY ID
+                selected_cleaning_duty_id =
+                    report.cleaning_duty.cleaning_duty_id;
 
-                let { data: photo_url } = supabase.storage
-                    .from('reports')
-                    .getPublicUrl(report.photo_proof);
+                let { data: photo_url } =
+                    supabase.storage
+                        .from('reports')
+                        .getPublicUrl(
+                            report.photo_proof
+                        );
+
                 container += `
-                <p><strong>Report Sent At:</strong> ${report.datetime_sent}</p>
-                <p><strong>Status:</strong> ${report.status}</p>
-                <img src="${photo_url.publicUrl}" class="img-fluid mb-2 rounded"></img>
-                `
+                    <p>
+                        <strong>Report Sent At:</strong>
+                        ${report.datetime_sent}
+                    </p>
+
+                    <p>
+                        <strong>Status:</strong>
+                        ${report.status}
+                    </p>
+
+                    <img
+                        src="${photo_url.publicUrl}"
+                        class="img-fluid mb-2 rounded"
+                    >
+                `;
             });
+
             photo_container.innerHTML = container;
         });
-
     });
+}
 
-    // filter records by date
-    let filter_btn = document.getElementById('filter_date_btn');
-    filter_btn.addEventListener('click', async function () {
+/* =========================
+   FILTER BY DATE
+========================= */
+let filter_btn =
+    document.getElementById('filter_date_btn');
+
+filter_btn.addEventListener(
+    'click',
+    async function () {
+
+        if (!area_id) return;
+
         container = '';
-        selected_day = `${input_date.value}T00:00:00.000Z`;
-        selected_day_end = `${input_date.value}T23:59:59.999Z`;
 
-        const { data, error } = await supabase
+        selected_day =
+            `${input_date.value}T00:00:00.000Z`;
+
+        selected_day_end =
+            `${input_date.value}T23:59:59.999Z`;
+
+        let {
+            data: filter_date_record,
+            error: f_err
+        } = await supabase
             .from('reports')
             .select(`
+                status,
                 datetime_sent,
                 photo_proof,
-                cleaning_duty!inner(area_assignment_id)
+                cleaning_duty!inner(
+                    cleaning_duty_id,
+                    area_assignment_id
+                )
             `)
-            .eq('cleaning_duty.area_assignment_id', area_id)
+            .eq(
+                'cleaning_duty.area_assignment_id',
+                area_id
+            )
             .gte('datetime_sent', selected_day)
-            .lte('datetime_sent', selected_day_end);
+            .lte(
+                'datetime_sent',
+                selected_day_end
+            );
 
-        if (filter_date_record.length === 0) {
-            photo_container.innerHTML = 'No reports found for the selected date.';
+        if (f_err) {
+            console.error(f_err);
+            return;
+        }
+
+        // NO RECORDS
+        if (
+            !filter_date_record ||
+            filter_date_record.length === 0
+        ) {
+
+            photo_container.innerHTML =
+                'No reports found for the selected date.';
+
             accept_btn.disabled = true;
             decline_btn.disabled = true;
+
             return;
         }
 
-        selected_cleaning_duty_id = filter_date_record[0].cleaning_duty_id;
+        // STORE CLEANING DUTY ID
+        selected_cleaning_duty_id =
+            filter_date_record[0]
+                .cleaning_duty.cleaning_duty_id;
 
         filter_date_record.forEach(record => {
-            let { data: photo_url } = supabase.storage
-                .from('reports')
-                .getPublicUrl(record.photo_proof);
+
+            let { data: photo_url } =
+                supabase.storage
+                    .from('reports')
+                    .getPublicUrl(record.photo_proof);
+
             container += `
-                <p><strong>Report Sent At:</strong> ${record.datetime_sent}</p>
-                <p><strong>Status:</strong> ${record.status}</p>
-                <img src="${photo_url.publicUrl}" class="img-fluid mb-2 rounded">
-                `
+                <p>
+                    <strong>Report Sent At:</strong>
+                    ${record.datetime_sent}
+                </p>
+
+                <p>
+                    <strong>Status:</strong>
+                    ${record.status}
+                </p>
+
+                <img
+                    src="${photo_url.publicUrl}"
+                    class="img-fluid mb-2 rounded"
+                >
+            `;
         });
+
         photo_container.innerHTML = container;
-    });
+    }
+);
 
-    // report status
-    accept_btn.addEventListener('click', async function () {
-        let { data: status, error: s_err } = await supabase
-            .from('reports')
-            .update({
-                status: 'Complete'
-            })
-            .eq('cleaning_duty_id', selected_cleaning_duty_id)
-            .gte('datetime_sent', selected_day)
-            .lte('datetime_sent', selected_day_end);
-        
-        if (s_err) {
-            console.log(s_err);
-            return;
-        }
+/* =========================
+   ACCEPT REPORT
+========================= */
+// accept_btn.addEventListener(
+//     'click',
+//     async function () {
 
-        console.log('Status Report'); // change to a success modal
-    });
+//         if (!selected_cleaning_duty_id) {
+//             console.error(
+//                 'No cleaning duty selected'
+//             );
+//             return;
+//         }
 
-    decline_btn.addEventListener('click', async function () {
-        let { data: status, error: s_err } = await supabase
-            .from('reports')
-            .update({
-                status: 'Declined'
-            })
-            .eq('cleaning_duty_id', selected_cleaning_duty_id)
-            .gte('datetime_sent', selected_day)
-            .lte('datetime_sent', selected_day_end);
-        
-        if (s_err) {
-            console.log(s_err);
-            return;
-        }
+//         let {
+//             error: s_err
+//         } = await supabase
+//             .from('reports')
+//             .update({
+//                 status: 'Complete'
+//             })
+//             .eq(
+//                 'cleaning_duty_id',
+//                 selected_cleaning_duty_id
+//             )
+//             .gte('datetime_sent', selected_day)
+//             .lte(
+//                 'datetime_sent',
+//                 selected_day_end
+//             );
 
-        console.log('Status Report'); // change to a success modal
-    });
+//         if (s_err) {
+//             console.log(s_err);
+//             return;
+//         }
+
+//         console.log('Status Updated');
+//     }
+// );
+
+// /* =========================
+//    DECLINE REPORT
+// ========================= */
+// decline_btn.addEventListener(
+//     'click',
+//     async function () {
+
+//         if (!selected_cleaning_duty_id) {
+//             console.error(
+//                 'No cleaning duty selected'
+//             );
+//             return;
+//         }
+
+//         let {
+//             error: s_err
+//         } = await supabase
+//             .from('reports')
+//             .update({
+//                 status: 'Declined'
+//             })
+//             .eq(
+//                 'cleaning_duty_id',
+//                 selected_cleaning_duty_id
+//             )
+//             .gte('datetime_sent', selected_day)
+//             .lte(
+//                 'datetime_sent',
+//                 selected_day_end
+//             );
+
+//         if (s_err) {
+//             console.log(s_err);
+//             return;
+//         }
+
+//         console.log('Status Updated');
+//     }
+// );
