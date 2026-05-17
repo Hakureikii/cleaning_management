@@ -160,15 +160,26 @@ body.light-theme .modal-body input[type="date"]{color-scheme:light;}
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
 
-            <div class="modal-body">
+                <div class="modal-body">
+                    <input type="date" id="filter_by_date">
+                    <button type="button" class="btn btn-primary" id="filter_date_btn">Select</button>
+                    <p> Photos </p>
+                    <div id="report_photo_container"></div>
+                </div>
 
-                <input type="date" id="filter_by_date">
-                <select id="section_dropdown"></select>
-                <button class="btn btn-primary" id="filter_date_btn">Select</button>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" data-bs-dismiss="modal" id="btn_accept_report">
+                        Accept
+                    </button>
 
-                <div id="report_photo_container"></div>
-
-            </div>
+                    <button type="button" class="btn btn-danger" id='btn_decline_report' data-bs-dismiss="modal">
+                        Decline
+                    </button>
+                    
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Close
+                    </button>
+                </div>
 
         </div>
     </div>

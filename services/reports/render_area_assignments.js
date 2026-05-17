@@ -7,89 +7,109 @@ let loadingModal = bootstrap.Modal.getOrCreateInstance(
 let today = new Date();
 let day_start = new Date(today.setHours(0, 0, 0, 0)).toISOString();
 let day_end = new Date(today.setHours(23, 59, 59, 999)).toISOString();
-
+let selected_day = day_start;
+let selected_day_end = day_end;
 let input_date = document.getElementById('filter_by_date');
 let photo_container = document.getElementById('report_photo_container');
 
 let area_id = null;
 let role = localStorage.getItem('role');
+let accept_btn = document.getElementById('btn_accept_report');
+let decline_btn = document.getElementById('btn_decline_report');
+let selected_cleaning_duty_id = null;
 
-let container = "";
-
-/* =========================
-   AREA ASSIGNMENTS RENDER
-========================= */
 export async function renderAreaAssignments() {
+    let area_placeholder = document.getElementById("area_assignments");
+    let area_assignments = '';
 
-    const area_placeholder = document.getElementById("area_assignments");
-    area_placeholder.innerHTML = "";
-
-    const { data, error } = await supabase
+    // GET ALL AREAS
+    let { data: areas, error } = await supabase
         .from('area_assignments')
         .select('*');
 
-    if (error) {
-        console.error(error);
-        area_placeholder.innerHTML = `<p class="text-danger">Failed to load areas.</p>`;
-        return;
-    }
+    // GET ALL REPORTS TODAY
+    let { data: reports, error: reportError } = await supabase
+        .from('reports')
+        .select(`
+            cleaning_duty!inner(
+                area_assignment_id
+            ),
+            datetime_sent
+        `)
+        .gte('datetime_sent', day_start)
+        .lte('datetime_sent', day_end);
 
-    let html = "";
+    // STORE REPORTED AREA IDS
+    let reportedAreas = reports.map(report =>
+        report.cleaning_duty.area_assignment_id
+    );
 
-    data.forEach(area => {
-        html += `
-        <div class="card area-card shadow-sm mb-3 border-0">
-            <div class="card-body d-flex justify-content-between align-items-center">
+    areas.forEach(area => {
 
-                <div>
-                    <h5 class="mb-1">${area.area}</h5>
-                    <small class="area-meta">
-                        Area Assignment ID: ${area.area_assignment_id}
-                    </small>
-                </div>
+        let noReportsBadge = '';
 
-                <button 
-                    class="btn btn-outline-primary view_report_btn"
+        if (role === 'officer') {
+            // CHECK IF AREA HAS REPORT
+            if (!reportedAreas.includes(area.area_assignment_id)) {
+
+                noReportsBadge = `
+                <span class="badge bg-danger ms-2">
+                    No Reports
+                </span>
+            `;
+            }
+        }
+
+        area_assignments += `
+            <div class="card shadow-sm mb-3 mx-3">
+                <div class="card-body">
+
+                    <h5 class="card-title">
+                        Area Assignment
+                        ${noReportsBadge}
+                    </h5>
+
+                    <p class="card-text">
+                        <strong>Area:</strong> ${area.area}
+                    </p>
+
+                    <button
+                    type='button'
+                    class="btn btn-primary view_report_btn"
                     data-bs-toggle="modal"
                     data-bs-target="#detailsModal"
                     data-areaid="${area.area_assignment_id}">
-                    <i class="bi bi-arrows-expand"></i> View
-                </button>
+                        View Reports
+                    </button>
 
+                </div>
             </div>
-        </div>`;
+        `;
     });
 
-    area_placeholder.innerHTML = html;
+    area_placeholder.innerHTML = area_assignments;
 
-    bindViewButtons();
-}
+    let views = document.querySelectorAll('.view_report_btn');
+    views.forEach(view => {
+        view.addEventListener('click', async function () {
+            accept_btn.disabled = false;
+            decline_btn.disabled = false;
+            area_id = this.dataset.areaid;
+            photo_container.innerHTML = '';
 
+            // for presidents get section id
+            let { data: { session } } = await supabase.auth.getSession();
 
-/* =========================
-   VIEW REPORT BUTTONS
-========================= */
-function bindViewButtons() {
+            if (!session) {
+                console.error("No user signed in!");
+                return;
+            }
 
-    document.querySelectorAll('.view_report_btn')
-        .forEach(btn => {
-
-            btn.addEventListener('click', async function () {
-
-                area_id = this.dataset.areaid;
-                photo_container.innerHTML = "";
-
-                const { data: { session } } = await supabase.auth.getSession();
-
-                if (!session) return;
-
-                const userId = session.user.id;
-
-                const { data: sectionData } = await supabase
-                    .from('presidents')
-                    .select('section_id')
-                    .eq('president_user_id', userId)
-                    .single();
+            let userId = session.user.id;
+            let { data: section, error: s_err } = await supabase
+                .from('presidents')
+                .select('section_id')
+                .eq('president_user_id', userId);
 
                 let query = supabase
                     .from('reports')
@@ -112,67 +132,37 @@ function bindViewButtons() {
                     );
                 }
 
-                const { data: reports, error } = await query;
+            let { data: reports, error: r_err } = await query;
 
-                renderReports(reports);
+            if (reports.length === 0) {
+                photo_container.innerHTML = 'No reports today';
+                return;
+            }
+
+            reports.forEach(report => {
+
+                selected_cleaning_duty_id = report.cleaning_duty.cleaning_duty_id;
+
+                let { data: photo_url } = supabase.storage
+                    .from('reports')
+                    .getPublicUrl(report.photo_proof);
+                container += `
+                <p><strong>Report Sent At:</strong> ${report.datetime_sent}</p>
+                <p><strong>Status:</strong> ${report.status}</p>
+                <img src="${photo_url.publicUrl}" class="img-fluid mb-2 rounded"></img>
+                `
             });
-
+            photo_container.innerHTML = container;
         });
-}
 
-
-/* =========================
-   REPORT RENDERER (FIXED UI)
-========================= */
-function renderReports(reports) {
-
-    if (!reports || reports.length === 0) {
-        photo_container.innerHTML = `
-            <div class="text-muted text-center p-4">
-                No reports found.
-            </div>`;
-        return;
-    }
-
-    container = `<div class="report-grid">`;
-
-    reports.forEach(r => {
-
-        let { data: img } = supabase.storage
-            .from('reports')
-            .getPublicUrl(r.photo_proof);
-
-        container += `
-        <div class="report-photo-card">
-
-            <img src="${img.publicUrl}" class="report-img"/>
-
-            <div class="report-meta">
-                <small>${new Date(r.datetime_sent).toLocaleString()}</small>
-            </div>
-
-        </div>`;
     });
 
-    container += `</div>`;
-    photo_container.innerHTML = container;
-}
-
-
-/* =========================
-   FILTER BY DATE
-========================= */
-document.getElementById('filter_date_btn')
-    .addEventListener('click', async function () {
-
-        if (!area_id) return;
-
-        container = "";
-
-        let date = input_date.value;
-
-        let start = `${date}T00:00:00.000Z`;
-        let end = `${date}T23:59:59.999Z`;
+    // filter records by date
+    let filter_btn = document.getElementById('filter_date_btn');
+    filter_btn.addEventListener('click', async function () {
+        container = '';
+        selected_day = `${input_date.value}T00:00:00.000Z`;
+        selected_day_end = `${input_date.value}T23:59:59.999Z`;
 
         const { data, error } = await supabase
             .from('reports')
@@ -182,8 +172,64 @@ document.getElementById('filter_date_btn')
                 cleaning_duty!inner(area_assignment_id)
             `)
             .eq('cleaning_duty.area_assignment_id', area_id)
-            .gte('datetime_sent', start)
-            .lte('datetime_sent', end);
+            .gte('datetime_sent', selected_day)
+            .lte('datetime_sent', selected_day_end);
 
-        renderReports(data);
+        if (filter_date_record.length === 0) {
+            photo_container.innerHTML = 'No reports found for the selected date.';
+            accept_btn.disabled = true;
+            decline_btn.disabled = true;
+            return;
+        }
+
+        selected_cleaning_duty_id = filter_date_record[0].cleaning_duty_id;
+
+        filter_date_record.forEach(record => {
+            let { data: photo_url } = supabase.storage
+                .from('reports')
+                .getPublicUrl(record.photo_proof);
+            container += `
+                <p><strong>Report Sent At:</strong> ${record.datetime_sent}</p>
+                <p><strong>Status:</strong> ${record.status}</p>
+                <img src="${photo_url.publicUrl}" class="img-fluid mb-2 rounded">
+                `
+        });
+        photo_container.innerHTML = container;
+    });
+
+    // report status
+    accept_btn.addEventListener('click', async function () {
+        let { data: status, error: s_err } = await supabase
+            .from('reports')
+            .update({
+                status: 'Complete'
+            })
+            .eq('cleaning_duty_id', selected_cleaning_duty_id)
+            .gte('datetime_sent', selected_day)
+            .lte('datetime_sent', selected_day_end);
+        
+        if (s_err) {
+            console.log(s_err);
+            return;
+        }
+
+        console.log('Status Report'); // change to a success modal
+    });
+
+    decline_btn.addEventListener('click', async function () {
+        let { data: status, error: s_err } = await supabase
+            .from('reports')
+            .update({
+                status: 'Declined'
+            })
+            .eq('cleaning_duty_id', selected_cleaning_duty_id)
+            .gte('datetime_sent', selected_day)
+            .lte('datetime_sent', selected_day_end);
+        
+        if (s_err) {
+            console.log(s_err);
+            return;
+        }
+
+        console.log('Status Report'); // change to a success modal
     });
