@@ -44,7 +44,6 @@ export async function renderAreaAssignments() {
 
     let area_assignments = '';
 
-    // GET ALL AREAS
     let { data: areas, error } = await supabase
         .from('area_assignments')
         .select('*');
@@ -54,7 +53,6 @@ export async function renderAreaAssignments() {
         return;
     }
 
-    // GET REPORTS TODAY
     let { data: reports, error: reportError } =
         await supabase
             .from('reports')
@@ -67,14 +65,11 @@ export async function renderAreaAssignments() {
             .gte('datetime_sent', day_start)
             .lte('datetime_sent', day_end);
 
-    
-
     if (reportError) {
         console.error(reportError);
         return;
     }
 
-    // STORE REPORTED AREA IDS
     let reportedAreas = (reports || []).map(report =>
         report.cleaning_duty.area_assignment_id
     );
@@ -83,15 +78,9 @@ export async function renderAreaAssignments() {
 
         let noReportsBadge = '';
 
-        // OFFICER CHECK
         if (role === 'officer') {
 
-            if (
-                !reportedAreas.includes(
-                    area.area_assignment_id
-                )
-            ) {
-
+            if (!reportedAreas.includes(area.area_assignment_id)) {
                 noReportsBadge = `
                     <span class="badge bg-danger ms-2">
                         No Reports
@@ -101,17 +90,22 @@ export async function renderAreaAssignments() {
         }
 
         area_assignments += `
-            <div class="card shadow-sm mb-3 mx-3">
+            <div class="card shadow-sm mb-3 mx-3 area-card">
+
                 <div class="card-body">
 
-                    <h5 class="card-title">
-                        Area Assignment
-                        ${noReportsBadge}
-                    </h5>
+                    <div class="d-flex justify-content-between align-items-start mb-2">
 
-                    <p class="card-text">
-                        <strong>Area:</strong>
-                        ${area.area}
+                        <h5 class="card-title mb-0">
+                            ${area.area}
+                        </h5>
+
+                        ${noReportsBadge}
+
+                    </div>
+
+                    <p class="area-meta mb-3">
+                        Area Assignment ID: ${area.area_assignment_id}
                     </p>
 
                     <button
@@ -145,21 +139,23 @@ function bindViewButtons() {
 
         view.addEventListener('click', async function () {
 
-            accept_btn.disabled = false;
-            decline_btn.disabled = false;
+            if (role === 'officer') {
+                accept_btn.disabled = false;
+                decline_btn.disabled = false;
+                accept_btn.classList.remove('btn-outline-success');
+                accept_btn.classList.add('btn-success');
 
+                decline_btn.classList.remove('btn-outline-danger');
+                decline_btn.classList.add('btn-danger');
+            }
             area_id = this.dataset.areaid;
 
             photo_container.innerHTML = '';
-
-            // IMPORTANT RESET
             container = '';
 
-            // RESET DATE FILTER
             selected_day = day_start;
             selected_day_end = day_end;
 
-            // GET SESSION
             let {
                 data: { session }
             } = await supabase.auth.getSession();
@@ -171,7 +167,6 @@ function bindViewButtons() {
 
             let userId = session.user.id;
 
-            // GET PRESIDENT SECTION
             let {
                 data: section,
                 error: s_err
@@ -185,7 +180,6 @@ function bindViewButtons() {
                 return;
             }
 
-            // REPORT QUERY
             let query = supabase
                 .from('reports')
                 .select(`
@@ -198,14 +192,10 @@ function bindViewButtons() {
                         section_id
                     )
                 `)
-                .eq(
-                    'cleaning_duty.area_assignment_id',
-                    area_id
-                )
+                .eq('cleaning_duty.area_assignment_id', area_id)
                 .gte('datetime_sent', day_start)
                 .lte('datetime_sent', day_end);
 
-            // PRESIDENT FILTER
             if (role === 'president') {
 
                 if (!section || section.length === 0) {
@@ -229,48 +219,76 @@ function bindViewButtons() {
                 return;
             }
 
-            // NO REPORTS
-            if (!reports || reports.length === 0) {
+            if (role === 'officer') {
 
-                photo_container.innerHTML =
-                    'No reports today';
+                if (!reports || reports.length === 0) {
 
-                accept_btn.disabled = true;
-                decline_btn.disabled = true;
+                    photo_container.innerHTML = `
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-inbox fs-2"></i>
+                            <p class="mt-2 mb-0">No reports found</p>
+                        </div>
+                    `;
 
-                return;
+                    accept_btn.disabled = true;
+                    decline_btn.disabled = true;
+
+                    return;
+                }
+
+                if (
+                    reports[0].status === 'Complete' ||
+                    reports[0].status === 'Declined'
+                ) {
+                    accept_btn.disabled = true;
+                    decline_btn.disabled = true;
+                }
             }
-
-            console.log(reports.status);
 
             reports.forEach(report => {
 
-                // STORE CLEANING DUTY ID
                 selected_cleaning_duty_id =
                     report.cleaning_duty.cleaning_duty_id;
 
                 let { data: photo_url } =
                     supabase.storage
                         .from('reports')
-                        .getPublicUrl(
-                            report.photo_proof
-                        );
+                        .getPublicUrl(report.photo_proof);
+
+                let statusBadge = '';
+
+                if (report.status === 'Complete') {
+                    statusBadge = `<span class="badge bg-success">Accepted</span>`;
+                } else if (report.status === 'Declined') {
+                    statusBadge = `<span class="badge bg-danger">Declined</span>`;
+                } else {
+                    statusBadge = `<span class="badge bg-warning text-dark">Pending</span>`;
+                }
 
                 container += `
-                    <p>
-                        <strong>Report Sent At:</strong>
-                        ${report.datetime_sent}
-                    </p>
+                    <div class="report-photo-card mb-3">
 
-                    <p>
-                        <strong>Status:</strong>
-                        ${report.status}
-                    </p>
+                        <img src="${photo_url.publicUrl}" />
 
-                    <img
-                        src="${photo_url.publicUrl}"
-                        class="img-fluid mb-2 rounded"
-                    >
+                        <div class="report-meta">
+
+                            <div class="date-time">
+                                ${report.datetime_sent}
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center">
+
+                                <span class="meta-label">
+                                    Status
+                                </span>
+
+                                ${statusBadge}
+
+                            </div>
+
+                        </div>
+
+                    </div>
                 `;
             });
 
@@ -288,6 +306,12 @@ let filter_btn =
 filter_btn.addEventListener(
     'click',
     async function () {
+
+        if (role === 'officer') {
+            accept_btn.disabled = false;
+            decline_btn.disabled = false;
+        }
+
 
         if (!area_id) return;
 
@@ -313,29 +337,23 @@ filter_btn.addEventListener(
                     area_assignment_id
                 )
             `)
-            .eq(
-                'cleaning_duty.area_assignment_id',
-                area_id
-            )
+            .eq('cleaning_duty.area_assignment_id', area_id)
             .gte('datetime_sent', selected_day)
-            .lte(
-                'datetime_sent',
-                selected_day_end
-            );
+            .lte('datetime_sent', selected_day_end);
 
         if (f_err) {
             console.error(f_err);
             return;
         }
 
-        // NO RECORDS
-        if (
-            !filter_date_record ||
-            filter_date_record.length === 0
-        ) {
+        if (!filter_date_record || filter_date_record.length === 0) {
 
-            photo_container.innerHTML =
-                'No reports found for the selected date.';
+            photo_container.innerHTML = `
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-calendar-x fs-2"></i>
+                    <p class="mt-2 mb-0">No reports found</p>
+                </div>
+            `;
 
             accept_btn.disabled = true;
             decline_btn.disabled = true;
@@ -343,7 +361,17 @@ filter_btn.addEventListener(
             return;
         }
 
-        // STORE CLEANING DUTY ID
+        if (
+            filter_date_record[0].status === 'Complete' ||
+            filter_date_record[0].status === 'Declined'
+        ) {
+            if (role === 'officer') {
+                accept_btn.disabled = true;
+                decline_btn.disabled = true;
+            }
+
+        }
+
         selected_cleaning_duty_id =
             filter_date_record[0]
                 .cleaning_duty.cleaning_duty_id;
@@ -355,21 +383,40 @@ filter_btn.addEventListener(
                     .from('reports')
                     .getPublicUrl(record.photo_proof);
 
+            let statusBadge = '';
+
+            if (record.status === 'Complete') {
+                statusBadge = `<span class="badge bg-success">Accepted</span>`;
+            } else if (record.status === 'Declined') {
+                statusBadge = `<span class="badge bg-danger">Declined</span>`;
+            } else {
+                statusBadge = `<span class="badge bg-warning text-dark">Pending</span>`;
+            }
+
             container += `
-                <p>
-                    <strong>Report Sent At:</strong>
-                    ${record.datetime_sent}
-                </p>
+                <div class="report-photo-card mb-3">
 
-                <p>
-                    <strong>Status:</strong>
-                    ${record.status}
-                </p>
+                    <img src="${photo_url.publicUrl}" />
 
-                <img
-                    src="${photo_url.publicUrl}"
-                    class="img-fluid mb-2 rounded"
-                >
+                    <div class="report-meta">
+
+                        <div class="date-time">
+                            ${record.datetime_sent}
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center">
+
+                            <span class="meta-label">
+                                Status
+                            </span>
+
+                            ${statusBadge}
+
+                        </div>
+
+                    </div>
+
+                </div>
             `;
         });
 
@@ -380,79 +427,52 @@ filter_btn.addEventListener(
 /* =========================
    ACCEPT REPORT
 ========================= */
-accept_btn.addEventListener(
-    'click',
-    async function () {
+if (role === 'officer') {
 
-        if (!selected_cleaning_duty_id) {
-            console.error(
-                'No cleaning duty selected'
-            );
-            return;
-        }
+    accept_btn.addEventListener('click', async function () {
 
-        let {
-            error: s_err
-        } = await supabase
+        if (!selected_cleaning_duty_id) return;
+
+        let { error } = await supabase
             .from('reports')
-            .update({
-                status: 'Complete'
-            })
-            .eq(
-                'cleaning_duty_id',
-                selected_cleaning_duty_id
-            )
+            .update({ status: 'Complete' })
+            .eq('cleaning_duty_id', selected_cleaning_duty_id)
             .gte('datetime_sent', selected_day)
-            .lte(
-                'datetime_sent',
-                selected_day_end
-            );
+            .lte('datetime_sent', selected_day_end);
 
-        if (s_err) {
-            console.log(s_err);
+        if (error) {
+            console.log(error);
             return;
         }
+
+        accept_btn.disabled = true;
+        decline_btn.disabled = true;
 
         console.log('Status Updated');
-    }
-);
+    });
 
-/* =========================
-   DECLINE REPORT
-========================= */
-decline_btn.addEventListener(
-    'click',
-    async function () {
+    /* =========================
+       DECLINE REPORT
+    ========================= */
+    decline_btn.addEventListener('click', async function () {
 
-        if (!selected_cleaning_duty_id) {
-            console.error(
-                'No cleaning duty selected'
-            );
-            return;
-        }
+        if (!selected_cleaning_duty_id) return;
 
-        let {
-            error: s_err
-        } = await supabase
+        let { error } = await supabase
             .from('reports')
-            .update({
-                status: 'Declined'
-            })
-            .eq(
-                'cleaning_duty_id',
-                selected_cleaning_duty_id
-            )
+            .update({ status: 'Declined' })
+            .eq('cleaning_duty_id', selected_cleaning_duty_id)
             .gte('datetime_sent', selected_day)
-            .lte(
-                'datetime_sent',
-                selected_day_end
-            );
+            .lte('datetime_sent', selected_day_end);
 
-        if (s_err) {
-            console.log(s_err);
+        if (error) {
+            console.log(error);
             return;
         }
+
+        accept_btn.disabled = true;
+        decline_btn.disabled = true;
 
         console.log('Status Updated');
-    }
-);
+    });
+}
