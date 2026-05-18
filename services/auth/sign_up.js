@@ -7,10 +7,12 @@ btn_sign_up.addEventListener('click', async function () {
     let fname = document.getElementById("fname").value;
     let mname = document.getElementById("mname").value;
     let lname = document.getElementById("lname").value;
-    let section = document.getElementById("section").value;
+    let section = document.getElementById("section_dropdown").value;
     let email = document.getElementById("email").value;
     let password = document.getElementById("password").value;
     let role = document.getElementById("role").value;
+
+    console.log(section);
 
     let { data: signup, error: signup_err } = await supabase.auth.signUp({
         email: email,
