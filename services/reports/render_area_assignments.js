@@ -346,6 +346,8 @@ filter_btn.addEventListener(
             return;
         }
 
+        console.log(filter_date_record);
+
         if (!filter_date_record || filter_date_record.length === 0) {
 
             photo_container.innerHTML = `
@@ -354,9 +356,11 @@ filter_btn.addEventListener(
                     <p class="mt-2 mb-0">No reports found</p>
                 </div>
             `;
+            if (role === 'officer') {
+                accept_btn.disabled = true;
+                decline_btn.disabled = true;
 
-            accept_btn.disabled = true;
-            decline_btn.disabled = true;
+            }
 
             return;
         }
@@ -448,7 +452,7 @@ if (role === 'officer') {
         accept_btn.disabled = true;
         decline_btn.disabled = true;
 
-        console.log('Status Updated');
+        alert('Report Accepted');
     });
 
     /* =========================
@@ -473,6 +477,6 @@ if (role === 'officer') {
         accept_btn.disabled = true;
         decline_btn.disabled = true;
 
-        console.log('Status Updated');
+        alert('Report Declined');
     });
 }
