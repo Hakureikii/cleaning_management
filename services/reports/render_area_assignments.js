@@ -29,8 +29,8 @@ let area_id = null;
 
 let role = localStorage.getItem('role');
 
-let accept_btn;
-let decline_btn;
+let accept_btn = document.getElementById('btn_accept_report');
+let decline_btn = document.getElementById('btn_decline_report');
 
 let selected_cleaning_duty_id = null;
 
@@ -38,14 +38,6 @@ let selected_cleaning_duty_id = null;
    RENDER AREA ASSIGNMENTS
 ========================= */
 export async function renderAreaAssignments() {
-
-    accept_btn = document.getElementById(
-        'btn_accept_report'
-    );
-
-    decline_btn = document.getElementById(
-        'btn_decline_report'
-    );
 
     let area_placeholder =
         document.getElementById("area_assignments");
@@ -74,6 +66,8 @@ export async function renderAreaAssignments() {
             `)
             .gte('datetime_sent', day_start)
             .lte('datetime_sent', day_end);
+
+    
 
     if (reportError) {
         console.error(reportError);
@@ -151,8 +145,8 @@ function bindViewButtons() {
 
         view.addEventListener('click', async function () {
 
-            // accept_btn.disabled = false;
-            // decline_btn.disabled = false;
+            accept_btn.disabled = false;
+            decline_btn.disabled = false;
 
             area_id = this.dataset.areaid;
 
@@ -246,6 +240,8 @@ function bindViewButtons() {
 
                 return;
             }
+
+            console.log(reports.status);
 
             reports.forEach(report => {
 
@@ -384,79 +380,79 @@ filter_btn.addEventListener(
 /* =========================
    ACCEPT REPORT
 ========================= */
-// accept_btn.addEventListener(
-//     'click',
-//     async function () {
+accept_btn.addEventListener(
+    'click',
+    async function () {
 
-//         if (!selected_cleaning_duty_id) {
-//             console.error(
-//                 'No cleaning duty selected'
-//             );
-//             return;
-//         }
+        if (!selected_cleaning_duty_id) {
+            console.error(
+                'No cleaning duty selected'
+            );
+            return;
+        }
 
-//         let {
-//             error: s_err
-//         } = await supabase
-//             .from('reports')
-//             .update({
-//                 status: 'Complete'
-//             })
-//             .eq(
-//                 'cleaning_duty_id',
-//                 selected_cleaning_duty_id
-//             )
-//             .gte('datetime_sent', selected_day)
-//             .lte(
-//                 'datetime_sent',
-//                 selected_day_end
-//             );
+        let {
+            error: s_err
+        } = await supabase
+            .from('reports')
+            .update({
+                status: 'Complete'
+            })
+            .eq(
+                'cleaning_duty_id',
+                selected_cleaning_duty_id
+            )
+            .gte('datetime_sent', selected_day)
+            .lte(
+                'datetime_sent',
+                selected_day_end
+            );
 
-//         if (s_err) {
-//             console.log(s_err);
-//             return;
-//         }
+        if (s_err) {
+            console.log(s_err);
+            return;
+        }
 
-//         console.log('Status Updated');
-//     }
-// );
+        console.log('Status Updated');
+    }
+);
 
-// /* =========================
-//    DECLINE REPORT
-// ========================= */
-// decline_btn.addEventListener(
-//     'click',
-//     async function () {
+/* =========================
+   DECLINE REPORT
+========================= */
+decline_btn.addEventListener(
+    'click',
+    async function () {
 
-//         if (!selected_cleaning_duty_id) {
-//             console.error(
-//                 'No cleaning duty selected'
-//             );
-//             return;
-//         }
+        if (!selected_cleaning_duty_id) {
+            console.error(
+                'No cleaning duty selected'
+            );
+            return;
+        }
 
-//         let {
-//             error: s_err
-//         } = await supabase
-//             .from('reports')
-//             .update({
-//                 status: 'Declined'
-//             })
-//             .eq(
-//                 'cleaning_duty_id',
-//                 selected_cleaning_duty_id
-//             )
-//             .gte('datetime_sent', selected_day)
-//             .lte(
-//                 'datetime_sent',
-//                 selected_day_end
-//             );
+        let {
+            error: s_err
+        } = await supabase
+            .from('reports')
+            .update({
+                status: 'Declined'
+            })
+            .eq(
+                'cleaning_duty_id',
+                selected_cleaning_duty_id
+            )
+            .gte('datetime_sent', selected_day)
+            .lte(
+                'datetime_sent',
+                selected_day_end
+            );
 
-//         if (s_err) {
-//             console.log(s_err);
-//             return;
-//         }
+        if (s_err) {
+            console.log(s_err);
+            return;
+        }
 
-//         console.log('Status Updated');
-//     }
-// );
+        console.log('Status Updated');
+    }
+);
